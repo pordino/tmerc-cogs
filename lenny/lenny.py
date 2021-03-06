@@ -26,7 +26,7 @@ LENNY_PARTS: Dict[str, List[str]] = {
         "ᕳ{}ᕲ",
         "({})",
         "[{}]",
-        "¯\\\_{}_/¯",
+        "¯\\\\_{}_/¯",
         "୧{}୨",
         "୨{}୧",
         "⤜({})⤏",
@@ -34,7 +34,7 @@ LENNY_PARTS: Dict[str, List[str]] = {
         "ᑫ{}ᑷ",
         "ᑴ{}ᑷ",
         "ヽ({})ﾉ",
-        "\\\({})/",
+        "\\\\({})/",
         "乁({})ㄏ",
         "└[{}]┘",
         "(づ{})づ",
@@ -152,13 +152,24 @@ LENNY_PARTS: Dict[str, List[str]] = {
 }
 
 
+def protect_against_emojification(text) -> str:
+    res = ""
+    for symbol in text:
+        if symbol == "\\":
+            res += symbol
+        else:
+            res += symbol + "\N{VARIATION SELECTOR-15}"
+
+    return res
+
+
 class Lenny(commands.Cog):
     """乁(-ロ-)ㄏ"""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.__url: str = "http://lenny.today/api/v1/random?limit=1"
+        self.__url: str = "http://api.lenny.today/v1/random?limit=1"
         self.__session = aiohttp.ClientSession()
 
     def cog_unload(self) -> None:
@@ -180,6 +191,8 @@ class Lenny(commands.Cog):
                 lenny = (await response.json())[0]["face"]
                 # escape markdown characters
                 lenny = discord.utils.escape_markdown(lenny)
+                # protect against discord transforming symbol in emoji
+                lenny = protect_against_emojification(lenny)
         # if the API call fails, make a (more limited) lenny locally instead
         except aiohttp.ClientError:
             log.warning("API call failed; falling back to local lenny")
